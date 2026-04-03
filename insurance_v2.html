@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>보험상담 도우미</title>
+<style>
+:root {
+  --navy: #0a2d5e;
+  --navy-mid: #1a4a8a;
+  --navy-light: #2563b0;
+  --gold: #c9a84c;
+  --gold-light: #e2c97e;
+  --bg: #eef2f7;
+  --white: #ffffff;
+  --gray1: #f6f8fb;
+  --gray2: #e2e8f0;
+  --gray3: #94a3b8;
+  --text: #1e293b;
+  --text2: #64748b;
+  --bar-current: #2563b0;
+  --bar-proposal: #16a34a;
+  --bar-bg: #e2e8f0;
+  --red: #dc2626;
+  --sidebar-w: 320px;
+  --header-h: 52px;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(10,45,94,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+/* ── HEADER ── */
+header {
+  height: var(--header-h);
+  background: var(--navy);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  z-index: 100;
+}
+.h-logo { font-size: 17px; font-weight: 700; color: var(--gold); letter-spacing: -0.3px; white-space: nowrap; }
+.h-sub { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; }
+.h-spacer { flex: 1; }
+.h-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  padding: 5px 13px;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+}
+.h-btn.on { background: var(--gold); border-color: var(--gold); color: var(--navy); font-weight: 700; }
+
+/* ── LAYOUT ── */
+.body-wrap {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── OVERLAY (mobile) ── */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 149;
+}
+.overlay.on { display: block; }
+
+/* ── SIDEBAR BASE ── */
+.sidebar {
+  position: fixed;
+  top: var(--header-h);
+  bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  z-index: 150;
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.sidebar-left { left: 0; transform: translateX(-100%); border-right: 1px solid var(--gray2); }
+.sidebar-right { right: 0; transform: translateX(100%); border-left: 1px solid var(--gray2); }
+.sidebar.open { transform: translateX(0); }
+
+/* ── SIDEBAR HEADER ── */
+.sb-head {
+  background: var(--navy);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.sb-head-title { color: var(--gold); font-weight: 700; font-size: 14px; }
+.sb-close {
+  width: 26px; height: 26px;
+  background: rgba(255,255,255,0.12);
+  border: none; border-radius: 50%;
+  color: #fff; font-size: 14px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+/* ── TABS ── */
+.sb-tabs { display: flex; border-bottom: 2px solid var(--gray2); flex-shrink: 0; }
+.sb-tab {
+  flex: 1; padding: 10px 6px; font-size: 13px; font-weight: 600;
+  text-align: center; cursor: pointer; color: var(--text2);
+  border-bottom: 3px solid transparent; margin-bottom: -2px;
+  transition: all .15s; line-height: 1.3;
+}
+.sb-tab.on { color: var(--navy); border-bottom-color: var(--gold); }
+
+/* ── PANEL ── */
+.sb-panel { display: none; flex: 1; overflow-y: auto; padding: 12px; flex-direction: column; gap: 8px; }
+.sb-panel.on { display: flex; }
+
+/* ── FIELD GROUP ── */
+.fg {
+  background: var(--gray1);
+  border: 1px solid var(--gray2);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.fg-title {
+  font-size: 10px; font-weight: 700; color: var(--navy);
+  letter-spacing: .4px; text-transform: uppercase;
+  padding-bottom: 5px; border-bottom: 1px solid var(--gray2);
+  margin-bottom: 1px;
+}
+.fr { display: flex; align-items: center; gap: 6px; min-height: 32px; }
+.fl {
+  font-size: 11.5px; color: var(--text2);
+  flex: 0 0 108px; line-height: 1.35;
+}
+.fl small { font-size: 10px; color: var(--gray3); display: block; }
+
+/* ── SELECT DROPDOWN ── */
+.fi-select {
+  flex: 1; height: 32px;
+  border: 1px solid var(--gray2); border-radius: 7px;
+  padding: 0 8px; font-size: 13px;
+  color: var(--text); background: var(--white);
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  cursor: pointer;
+}
+.fi-select:focus { outline: none; border-color: var(--navy-light); background-color: #f0f6ff; }
+.fi-unit { font-size: 11px; color: var(--text2); white-space: nowrap; flex-shrink: 0; }
+
+/* min~max 행 */
+.fr-mm { gap: 4px; }
+.fr-mm .fi-select { flex: 1; min-width: 0; }
+.fr-mm .mm-sep { font-size: 11px; color: var(--gray3); flex-shrink: 0; }
+
+/* 실손 */
+.silson-row { display: flex; gap: 5px; }
+.silson-row .fi-select { flex: 1; }
+
+/* 납입 toggle */
+.tog-wrap { display: flex; gap: 5px; flex-wrap: wrap; }
+.tog {
+  padding: 5px 10px; border: 1.5px solid var(--gray2);
+  border-radius: 16px; font-size: 11.5px; cursor: pointer;
+  color: var(--text2); background: var(--white); transition: all .15s;
+}
+.tog.on { background: var(--navy); border-color: var(--navy); color: #fff; font-weight: 600; }
+
+/* 노후자금 */
+.retire-tog { display: flex; gap: 5px; }
+.rt-btn {
+  flex: 1; padding: 6px; border: 1.5px solid var(--gray2);
+  border-radius: 7px; font-size: 12px; font-weight: 600;
+  cursor: pointer; text-align: center; background: var(--white); color: var(--text2);
+  transition: all .15s;
+}
+.rt-btn.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+/* 적용 버튼 */
+.apply-btn {
+  background: var(--navy); color: #fff;
+  border: none; border-radius: var(--radius);
+  padding: 12px; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all .2s; margin-top: 2px;
+  letter-spacing: -.3px;
+}
+.apply-btn:active { opacity: .85; }
+.apply-btn.gold { background: var(--gold); color: var(--navy); }
+
+/* ── MAIN ── */
+.main { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+/* 플레이스홀더 */
+.ph {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; color: var(--gray3);
+}
+.ph .ph-icon { font-size: 56px; }
+.ph .ph-msg { font-size: 18px; font-weight: 600; }
+.ph .ph-sub { font-size: 13px; text-align: center; line-height: 1.6; }
+
+/* 결과 영역 */
+.result { display: none; flex-direction: column; gap: 14px; }
+.result.on { display: flex; }
+
+/* 실손 배지 */
+.silson-badge {
+  background: var(--navy);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+}
+.sb-item { display: flex; flex-direction: column; gap: 3px; }
+.sb-item .sbi-label { font-size: 10px; color: rgba(255,255,255,0.5); }
+.sb-item .sbi-val { font-size: 13px; font-weight: 700; color: var(--gold-light); line-height: 1.35; }
+.sb-item .sbi-val.dim { color: rgba(255,255,255,0.3); font-weight: 400; font-size: 12px; }
+.sb-div { width: 1px; height: 32px; background: rgba(255,255,255,0.15); align-self: center; }
+
+/* 그래프 섹션 */
+.graph-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.gs-head {
+  padding: 12px 18px;
+  background: var(--gray1);
+  border-bottom: 1px solid var(--gray2);
+  display: flex; align-items: center; gap: 14px;
+}
+.gs-head-title { font-size: 14px; font-weight: 700; color: var(--navy); flex: 1; }
+.legend { display: flex; gap: 14px; align-items: center; }
+.leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.leg-current { background: var(--bar-current); }
+.leg-proposal { background: var(--bar-proposal); }
+.leg-max { background: var(--bar-bg); border: 1.5px solid var(--gray3); }
+
+.gs-body { padding: 10px 18px 14px; display: flex; flex-direction: column; gap: 0; }
+
+/* 각 항목 행 — 그룹형 */
+.bar-row {
+  display: flex; align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--gray2);
+  gap: 10px;
+}
+.bar-row:last-child { border-bottom: none; }
+.bar-label {
+  flex: 0 0 128px; font-size: 12px; color: var(--text2); line-height: 1.35;
+}
+.bar-label strong { display: block; color: var(--text); font-weight: 600; font-size: 12.5px; }
+.bar-label .bl-max { font-size: 10px; color: var(--gray3); }
+
+/* 그룹 트랙 래퍼: 현재·제안 두 줄 */
+.bar-track-wrap { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+
+/* 한 줄 = 레이블 + 트랙 */
+.bar-group-row { display: flex; align-items: center; gap: 6px; }
+.bar-group-label {
+  flex: 0 0 28px; font-size: 10px; font-weight: 600;
+  color: var(--text2); text-align: right;
+}
+.bar-group-label.lc { color: var(--bar-current); }
+.bar-group-label.lp { color: var(--bar-proposal); }
+
+.bar-track {
+  flex: 1; height: 15px; background: var(--bar-bg);
+  border-radius: 7px; overflow: hidden; position: relative;
+}
+/* 권장선 (max 위치 = 50%) */
+.bar-track::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0;
+  left: 50%; width: 2px;
+  background: rgba(148,163,184,0.55);
+  border-radius: 1px;
+}
+.bar-fill {
+  height: 100%; border-radius: 7px;
+  transition: width .55s cubic-bezier(.4,0,.2,1);
+}
+.bar-fill.current  { background: var(--bar-current); }
+.bar-fill.proposal { background: var(--bar-proposal); }
+
+/* 오른쪽 수치 */
+.bar-val-wrap { flex: 0 0 88px; display: flex; flex-direction: column; gap: 2px; text-align: right; }
+.bar-val { font-size: 11.5px; font-weight: 600; color: var(--text); white-space: nowrap; }
+.bar-val.vc { color: var(--bar-current); }
+.bar-val.vp { color: var(--bar-proposal); }
+.bar-val.no { color: var(--gray3); font-weight: 400; }
+
+/* 제안 납입 바 */
+.proposal-bar {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 18px;
+  display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+}
+.pb-item { display: flex; flex-direction: column; gap: 2px; }
+.pb-label { font-size: 10px; color: var(--text2); }
+.pb-val { font-size: 15px; font-weight: 700; color: var(--navy); }
+.pb-val.gold { color: var(--gold); }
+.pb-div { width: 1px; height: 28px; background: var(--gray2); }
+
+/* ── RIGHT SIDEBAR ── */
+.rs-upload {
+  border: 2px dashed var(--gray2); border-radius: 8px;
+  padding: 14px; text-align: center; cursor: pointer;
+  margin: 10px; transition: all .2s;
+}
+.rs-upload:hover { border-color: var(--navy-light); background: #f0f6ff; }
+.rs-upload input { display: none; }
+.rs-upload .ru-icon { font-size: 22px; color: var(--gray3); }
+.rs-upload .ru-text { font-size: 11px; color: var(--text2); margin-top: 3px; }
+.mat-list { flex: 1; overflow-y: auto; padding: 4px 8px 10px; }
+.mat-item {
+  padding: 10px 10px; border-radius: 7px; cursor: pointer;
+  font-size: 13px; color: var(--text2);
+  display: flex; align-items: center; gap: 7px;
+  transition: all .12s; border: 1px solid transparent;
+}
+.mat-item:hover { background: var(--gray1); color: var(--navy); }
+.mat-item.on { background: #eef3ff; border-color: #c0d0f0; color: var(--navy); font-weight: 600; }
+.mat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gray3); flex-shrink: 0; }
+.mat-dot.loaded { background: var(--bar-proposal); }
+
+/* ── VIEWER MODAL ── */
+.viewer {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.88); z-index: 300;
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.viewer.on { display: flex; }
+.vw-head { width: 100%; max-width: 960px; display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; }
+.vw-title { color: var(--gold); font-size: 15px; font-weight: 700; }
+.vw-close { background: rgba(255,255,255,0.12); border: none; color: #fff; padding: 6px 14px; border-radius: 16px; font-size: 13px; cursor: pointer; }
+.vw-body { width: 100%; max-width: 960px; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.vw-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; display: none; }
+.vw-img.on { display: block; }
+.vw-ph { display: flex; flex-direction: column; align-items: center; gap: 10px; color: rgba(255,255,255,0.3); }
+.vw-ph .vp-icon { font-size: 52px; }
+.vw-ph .vp-text { font-size: 14px; }
+.vw-nav { display: flex; align-items: center; gap: 14px; padding-top: 14px; }
+.vw-nbtn {
+  width: 42px; height: 42px; background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2); color: #fff;
+  border-radius: 50%; font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all .15s;
+}
+.vw-nbtn:disabled { opacity: .25; cursor: not-allowed; }
+.vw-pi { color: rgba(255,255,255,0.6); font-size: 13px; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--gray2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="h-spacer"></div>
+  <button class="h-btn" id="btnLeft" onclick="toggleLeft()">☰ 고객정보</button>
+  <button class="h-btn" id="btnRight" onclick="toggleRight()">📋 자료</button>
+</header>
+
+<div class="body-wrap">
+
+  <!-- OVERLAY -->
+  <div class="overlay" id="overlay" onclick="closeAll()"></div>
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar sidebar-left" id="sideLeft">
+    <div class="sb-head">
+      <span class="sb-head-title">고객 보장 정보</span>
+      <button class="sb-close" onclick="toggleLeft()">✕</button>
+    </div>
+    <div class="sb-tabs">
+      <div class="sb-tab on" onclick="switchTab(0)" id="tab0">현재 보장</div>
+      <div class="sb-tab" onclick="switchTab(1)" id="tab1">제안 보장</div>
+    </div>
+
+    <!-- 현재보장 패널 -->
+    <div class="sb-panel on" id="panel0">
+
+      <div class="fg">
+        <div class="fg-title">🛡 사망</div>
+        <div class="fr">
+          <span class="fl">사망보장금</span>
+          <select class="fi-select" id="c_death"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🎗 암 진단</div>
+        <div class="fr">
+          <span class="fl">암진단금<small>(남·녀특정암 포함)</small></span>
+          <select class="fi-select" id="c_cancer"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">소액암진단금</span>
+          <select class="fi-select" id="c_minor_cancer"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🧠 뇌혈관</div>
+        <div class="fr">
+          <span class="fl">뇌혈관질환 진단</span>
+          <select class="fi-select" id="c_brain_all"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">뇌졸중 진단</span>
+          <select class="fi-select" id="c_stroke"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">뇌출혈 진단</span>
+          <select class="fi-select" id="c_hemorrhage"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">❤ 심장·허혈성</div>
+        <div class="fr">
+          <span class="fl">허혈성심장질환 진단</span>
+          <select class="fi-select" id="c_heart_isch"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">급성심근경색증 진단</span>
+          <select class="fi-select" id="c_heart_mi"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">💊 주요치료비</div>
+        <div class="fr">
+          <span class="fl">고액항암치료비</span>
+          <select class="fi-select" id="c_chemo"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">암 주요치료비</span>
+          <select class="fi-select" id="c_cancer_tx"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">뇌혈관 주요치료비</span>
+          <select class="fi-select" id="c_brain_tx"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">허혈성 주요치료비</span>
+          <select class="fi-select" id="c_heart_tx"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🔪 수술비</div>
+        <div class="fr fr-mm">
+          <span class="fl">질병수술비</span>
+          <select class="fi-select" id="c_dis_op_min"></select>
+          <span class="mm-sep">~</span>
+          <select class="fi-select" id="c_dis_op_max"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr fr-mm">
+          <span class="fl">상해수술비</span>
+          <select class="fi-select" id="c_acc_op_min"></select>
+          <span class="mm-sep">~</span>
+          <select class="fi-select" id="c_acc_op_max"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🛏 간병일당</div>
+        <div class="fr">
+          <span class="fl">질병 간병일당</span>
+          <select class="fi-select" id="c_dis_care"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">상해 간병일당</span>
+          <select class="fi-select" id="c_acc_care"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🏥 실손의료비</div>
+        <div class="silson-row">
+          <select class="fi-select" id="c_silson_year">
+            <option value="">가입년도 선택</option>
+            <option value="2009이전">2009년 이전</option>
+            <option value="2009">2009년</option>
+            <option value="2013">2013년</option>
+            <option value="2017">2017년</option>
+            <option value="2021">2021년</option>
+            <option value="2024">2024년</option>
+            <option value="미가입">미가입</option>
+          </select>
+          <select class="fi-select" id="c_silson_type">
+            <option value="">보험사 구분</option>
+            <option value="생명">생명보험사</option>
+            <option value="손해">손해보험사</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 권장금액 수정 (접이식) -->
+      <div class="fg" style="border-color:#c0d0f0; background:#f0f5ff;">
+        <div class="fg-title" style="color:var(--navy-light); cursor:pointer; display:flex; align-items:center; justify-content:space-between;" onclick="toggleMaxEdit()">
+          <span>⚙ 권장금액 수정</span>
+          <span id="maxEditArrow" style="font-size:12px; transition:transform .2s;">▼</span>
+        </div>
+        <div id="maxEditPanel" style="display:none; margin-top:4px; display:flex; flex-direction:column; gap:6px;">
+          <!-- JS로 생성 -->
+        </div>
+      </div>
+
+      <button class="apply-btn" onclick="applyCurrentCoverage()">✓ 현재보장 적용하기</button>
+    </div>
+
+    <!-- 제안보장 패널 -->
+    <div class="sb-panel" id="panel1">
+
+      <div class="fg">
+        <div class="fg-title">🛡 사망</div>
+        <div class="fr">
+          <span class="fl">사망보장금</span>
+          <select class="fi-select" id="p_death"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🎗 암 진단</div>
+        <div class="fr">
+          <span class="fl">암진단금<small>(남·녀특정암 포함)</small></span>
+          <select class="fi-select" id="p_cancer"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">소액암진단금</span>
+          <select class="fi-select" id="p_minor_cancer"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🧠 뇌혈관</div>
+        <div class="fr">
+          <span class="fl">뇌혈관질환 진단</span>
+          <select class="fi-select" id="p_brain_all"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">뇌졸중 진단</span>
+          <select class="fi-select" id="p_stroke"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">뇌출혈 진단</span>
+          <select class="fi-select" id="p_hemorrhage"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">❤ 심장·허혈성</div>
+        <div class="fr">
+          <span class="fl">허혈성심장질환 진단</span>
+          <select class="fi-select" id="p_heart_isch"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">급성심근경색증 진단</span>
+          <select class="fi-select" id="p_heart_mi"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">💊 주요치료비</div>
+        <div class="fr">
+          <span class="fl">고액항암치료비</span>
+          <select class="fi-select" id="p_chemo"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">암 주요치료비</span>
+          <select class="fi-select" id="p_cancer_tx"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">뇌혈관 주요치료비</span>
+          <select class="fi-select" id="p_brain_tx"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">허혈성 주요치료비</span>
+          <select class="fi-select" id="p_heart_tx"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🔪 수술비</div>
+        <div class="fr fr-mm">
+          <span class="fl">질병수술비</span>
+          <select class="fi-select" id="p_dis_op_min"></select>
+          <span class="mm-sep">~</span>
+          <select class="fi-select" id="p_dis_op_max"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr fr-mm">
+          <span class="fl">상해수술비</span>
+          <select class="fi-select" id="p_acc_op_min"></select>
+          <span class="mm-sep">~</span>
+          <select class="fi-select" id="p_acc_op_max"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🛏 간병일당</div>
+        <div class="fr">
+          <span class="fl">질병 간병일당</span>
+          <select class="fi-select" id="p_dis_care"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr">
+          <span class="fl">상해 간병일당</span>
+          <select class="fi-select" id="p_acc_care"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">🏦 노후자금</div>
+        <div class="fr">
+          <span class="fl">노후자금</span>
+          <div class="retire-tog" style="flex:1">
+            <button class="rt-btn on" id="rt_n" onclick="setRetire(false)">없음</button>
+            <button class="rt-btn" id="rt_y" onclick="setRetire(true)">있음</button>
+          </div>
+        </div>
+        <div class="fr" id="retire_row" style="display:none">
+          <span class="fl">총 노후자금</span>
+          <select class="fi-select" id="p_retire_amt"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+      </div>
+
+      <div class="fg">
+        <div class="fg-title">💳 납입조건</div>
+        <div class="fr">
+          <span class="fl">월납입금액</span>
+          <select class="fi-select" id="p_monthly"></select>
+          <span class="fi-unit">만원</span>
+        </div>
+        <div class="fr" style="flex-wrap:wrap; gap:4px;">
+          <span class="fl" style="flex:0 0 100%; margin-bottom:2px; font-size:11px;">납입기간</span>
+          <div class="tog-wrap" style="flex:1">
+            <span class="tog" onclick="selPeriod(this,'10년납')">10년납</span>
+            <span class="tog on" onclick="selPeriod(this,'20년납')">20년납</span>
+            <span class="tog" onclick="selPeriod(this,'15년납')">15년납</span>
+            <span class="tog" onclick="selPeriod(this,'25년납')">25년납</span>
+            <span class="tog" onclick="selPeriod(this,'30년납')">30년납</span>
+          </div>
+        </div>
+        <div class="fr" style="flex-wrap:wrap; gap:4px;">
+          <span class="fl" style="flex:0 0 100%; margin-bottom:2px; font-size:11px;">납입면제</span>
+          <div class="tog-wrap" style="flex:1" id="waiverWrap">
+            <span class="tog on" id="waiver_none" onclick="toggleWaiver('없음')">없음</span>
+            <span class="tog" id="waiver_aci" onclick="toggleWaiver('암/뇌/심')">암/뇌/심</span>
+            <span class="tog" id="waiver_dis" onclick="toggleWaiver('50%장해')">50%장해</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="apply-btn gold" onclick="applyProposal()">✓ 제안보장 적용하기</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main class="main" id="mainArea">
+
+    <!-- 메인 슬라이드쇼 (고객정보 미입력 시) -->
+    <div id="mainSlide" style="flex:1; display:flex; flex-direction:column; background:#111; border-radius:var(--radius); overflow:hidden; position:relative; min-height:0;">
+      <div id="msImgWrap" style="flex:1; display:flex; align-items:center; justify-content:center; min-height:0; position:relative;">
+        <div id="msPh" style="display:flex;flex-direction:column;align-items:center;gap:10px;color:rgba(255,255,255,0.25);">
+          <div style="font-size:48px;">📋</div>
+          <div style="font-size:14px;">materials/main/ 폴더에 이미지를 추가하세요</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;background:rgba(0,0,0,0.4);">
+        <button class="vw-nbtn" id="msPrev" onclick="msChangePage(-1)" disabled>‹</button>
+        <span style="color:rgba(255,255,255,0.6);font-size:13px;" id="msPi">- / -</span>
+        <button class="vw-nbtn" id="msNext" onclick="msChangePage(1)" disabled>›</button>
+      </div>
+    </div>
+
+    <div class="result" id="result">
+
+      <!-- 실손 배지 -->
+      <div class="silson-badge" id="silsonBadge">
+        <div class="sb-item">
+          <span class="sbi-label">실손의료비</span>
+          <span class="sbi-val" id="si_gen">-</span>
+        </div>
+        <div class="sb-div"></div>
+        <div class="sb-item">
+          <span class="sbi-label">보험사 구분</span>
+          <span class="sbi-val" id="si_type">-</span>
+        </div>
+        <div class="sb-div" id="si_div2" style="display:none"></div>
+        <div class="sb-item" id="si_detail_wrap" style="display:none">
+          <span class="sbi-label">급여 / 비급여</span>
+          <span class="sbi-val" id="si_pct">-</span>
+        </div>
+        <div class="sb-div" id="si_div3" style="display:none"></div>
+        <div class="sb-item" id="si_limit_wrap" style="display:none">
+          <span class="sbi-label">보장 한도</span>
+          <span class="sbi-val" id="si_limit">-</span>
+        </div>
+        <div class="sb-div" id="si_div4" style="display:none"></div>
+        <div class="sb-item" id="si_self_wrap" style="display:none">
+          <span class="sbi-label">자기부담금</span>
+          <span class="sbi-val" id="si_self">-</span>
+        </div>
+      </div>
+
+      <!-- 그래프 섹션 -->
+      <div class="graph-section">
+        <div class="gs-head">
+          <span class="gs-head-title">보장 현황 비교</span>
+          <div class="legend">
+            <div class="leg-item"><div class="leg-dot leg-current"></div>현재보장</div>
+            <div class="leg-item" id="leg_proposal" style="display:none"><div class="leg-dot leg-proposal"></div>제안후</div>
+            <div class="leg-item"><div class="leg-dot leg-max"></div>권장기준</div>
+          </div>
+        </div>
+        <div class="gs-body" id="graphBody">
+          <!-- JS로 생성 -->
+        </div>
+      </div>
+
+      <!-- 제안 납입 바 -->
+      <div class="proposal-bar" id="proposalBar" style="display:none">
+        <div class="pb-item"><span class="pb-label">월 납입금액</span><span class="pb-val gold" id="pb_monthly">-</span></div>
+        <div class="pb-div"></div>
+        <div class="pb-item"><span class="pb-label">납입기간</span><span class="pb-val" id="pb_period">-</span></div>
+        <div class="pb-div"></div>
+        <div class="pb-item"><span class="pb-label">납입면제</span><span class="pb-val" id="pb_waiver">-</span></div>
+        <div class="pb-div"></div>
+        <div class="pb-item"><span class="pb-label">노후자금</span><span class="pb-val" id="pb_retire">-</span></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="sidebar sidebar-right" id="sideRight">
+    <div class="sb-head">
+      <span class="sb-head-title">📚 상담 자료</span>
+      <button class="sb-close" onclick="toggleRight()">✕</button>
+    </div>
+    <div class="mat-list" id="matList">
+      <!-- JS로 생성 -->
+    </div>
+  </div>
+
+</div>
+
+<!-- VIEWER -->
+<div class="viewer" id="viewer">
+  <div class="vw-head">
+    <span class="vw-title" id="vwTitle">-</span>
+    <button class="vw-close" onclick="closeViewer()">✕ 닫기</button>
+  </div>
+  <div class="vw-body" id="vwBody">
+    <div class="vw-ph" id="vwPh">
+      <div class="vp-icon">🖼️</div>
+      <div class="vp-text" id="vwPhText">이미지를 불러오는 중...</div>
+    </div>
+  </div>
+  <div class="vw-nav">
+    <button class="vw-nbtn" id="vwPrev" onclick="vwChangePage(-1)" disabled>‹</button>
+    <span class="vw-pi" id="vwPi">- / -</span>
+    <button class="vw-nbtn" id="vwNext" onclick="vwChangePage(1)" disabled>›</button>
+  </div>
+</div>
+
+<script>
+// ── 상수: 필요보장금액(max), 드롭다운 단위 ──
+const FIELDS = [
+  { key:'death',        label:'사망보장금',          max:50000, step:500  },
+  { key:'cancer',       label:'암진단금',             max:10000, step:500  },
+  { key:'minor_cancer', label:'소액암진단금',          max:5000,  step:100  },
+  { key:'brain_all',    label:'뇌혈관질환 진단',       max:2000,  step:500  },
+  { key:'stroke',       label:'뇌졸중 진단',           max:3000,  step:500  },
+  { key:'hemorrhage',   label:'뇌출혈 진단',           max:5000,  step:500  },
+  { key:'heart_isch',   label:'허혈성심장질환 진단',   max:2000,  step:500  },
+  { key:'heart_mi',     label:'급성심근경색증 진단',   max:5000,  step:500  },
+  { key:'chemo',        label:'고액항암치료비',        max:10000, step:500  },
+  { key:'cancer_tx',    label:'암 주요치료비',         max:1000,  step:100  },
+  { key:'brain_tx',     label:'뇌혈관 주요치료비',    max:1000,  step:100  },
+  { key:'heart_tx',     label:'허혈성 주요치료비',    max:1000,  step:100  },
+  // 수술비: isRange + min/max 스펙 분리
+  { key:'dis_op',  label:'질병수술비',  max:1000, stepMin:10,  maxMin:200, stepMax:100, maxMax:2000, isRange:true },
+  { key:'acc_op',  label:'상해수술비',  max:1000, stepMin:10,  maxMin:200, stepMax:100, maxMax:2000, isRange:true },
+  { key:'dis_care', label:'질병 간병일당', max:15, step:1  },
+  { key:'acc_care', label:'상해 간병일당', max:15, step:1  },
+];
+
+// 드롭다운 선택지 생성 (fixedMax: 이 값까지만 생성)
+function makeOptions(fixedMax, step) {
+  const opts = [];
+  opts.push({ v: 0, label: '미가입 (0)' });
+  for (let v = step; v <= fixedMax; v += step) {
+    opts.push({ v, label: fmtVal(v) });
+  }
+  return opts;
+}
+
+function fmtVal(v) {
+  if (v === 0) return '0';
+  if (v >= 10000) {
+    const ok = v % 10000 === 0;
+    return ok ? `${v/10000}억` : `${(v/10000).toFixed(1)}억`;
+  }
+  return `${v.toLocaleString()}만`;
+}
+
+function fmtDisplay(v) {
+  if (!v || v == 0) return null;
+  if (v >= 10000) {
+    return (v % 10000 === 0) ? `${v/10000}억원` : `${(v/10000).toFixed(1)}억원`;
+  }
+  return `${Number(v).toLocaleString()}만원`;
+}
+
+function populateSel(id, fixedMax, step) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  makeOptions(fixedMax, step).forEach(o => {
+    const el = document.createElement('option');
+    el.value = o.v; el.textContent = o.label;
+    sel.appendChild(el);
+  });
+}
+
+// 모든 select 초기화
+window.addEventListener('DOMContentLoaded', () => {
+  // customMax 초기값 세팅
+  FIELDS.forEach(f => { if (!f.isRange) customMax[f.key] = f.max; });
+
+  FIELDS.forEach(f => {
+    if (f.isRange) {
+      // min: 10만 단위 200만까지 / max: 100만 단위 2000만까지
+      populateSel('c_'+f.key+'_min', f.maxMin, f.stepMin);
+      populateSel('c_'+f.key+'_max', f.maxMax, f.stepMax);
+      populateSel('p_'+f.key+'_min', f.maxMin, f.stepMin);
+      populateSel('p_'+f.key+'_max', f.maxMax, f.stepMax);
+    } else {
+      populateSel('c_'+f.key, f.max, f.step);
+      populateSel('p_'+f.key, f.max, f.step);
+    }
+  });
+  populateSel('p_retire_amt', 100000, 500);
+  populateSel('p_monthly', 200, 1);
+
+  buildMaxEditPanel();
+  buildMaterialList();
+  buildGraph();
+});
+
+// ── 사이드바 ──
+let leftOpen = false, rightOpen = false;
+function toggleLeft() {
+  leftOpen = !leftOpen;
+  document.getElementById('sideLeft').classList.toggle('open', leftOpen);
+  document.getElementById('overlay').classList.toggle('on', leftOpen || rightOpen);
+  document.getElementById('btnLeft').classList.toggle('on', leftOpen);
+  if (leftOpen && rightOpen) { rightOpen = false; document.getElementById('sideRight').classList.remove('open'); document.getElementById('btnRight').classList.remove('on'); }
+}
+function toggleRight() {
+  rightOpen = !rightOpen;
+  document.getElementById('sideRight').classList.toggle('open', rightOpen);
+  document.getElementById('overlay').classList.toggle('on', leftOpen || rightOpen);
+  document.getElementById('btnRight').classList.toggle('on', rightOpen);
+  if (rightOpen && leftOpen) { leftOpen = false; document.getElementById('sideLeft').classList.remove('open'); document.getElementById('btnLeft').classList.remove('on'); }
+}
+function closeAll() {
+  leftOpen = rightOpen = false;
+  document.getElementById('sideLeft').classList.remove('open');
+  document.getElementById('sideRight').classList.remove('open');
+  document.getElementById('overlay').classList.remove('on');
+  document.getElementById('btnLeft').classList.remove('on');
+  document.getElementById('btnRight').classList.remove('on');
+}
+
+function switchTab(i) {
+  document.getElementById('tab0').classList.toggle('on', i===0);
+  document.getElementById('tab1').classList.toggle('on', i===1);
+  document.getElementById('panel0').classList.toggle('on', i===0);
+  document.getElementById('panel1').classList.toggle('on', i===1);
+}
+
+// ── 납입 토글 ──
+let selPeriodVal = '20년납';
+let waiverSet = new Set(['없음']); // 납입면제 중복 선택용
+let hasRetire = false;
+
+function selPeriod(el, v) {
+  selPeriodVal = v;
+  el.closest('.tog-wrap').querySelectorAll('.tog').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function toggleWaiver(v) {
+  if (v === '없음') {
+    // 없음 선택 시 나머지 해제
+    waiverSet.clear();
+    waiverSet.add('없음');
+  } else {
+    // 다른 항목 선택 시 '없음' 해제 후 토글
+    waiverSet.delete('없음');
+    if (waiverSet.has(v)) {
+      waiverSet.delete(v);
+    } else {
+      waiverSet.add(v);
+    }
+    // 아무것도 선택 안 되면 '없음' 복귀
+    if (waiverSet.size === 0) waiverSet.add('없음');
+  }
+  // UI 업데이트
+  document.getElementById('waiver_none').classList.toggle('on', waiverSet.has('없음'));
+  document.getElementById('waiver_aci').classList.toggle('on',  waiverSet.has('암/뇌/심'));
+  document.getElementById('waiver_dis').classList.toggle('on',  waiverSet.has('50%장해'));
+}
+
+function getWaiverLabel() {
+  if (waiverSet.has('없음')) return '없음';
+  return [...waiverSet].join(' + ');
+}
+function setRetire(v) {
+  hasRetire = v;
+  document.getElementById('rt_n').classList.toggle('on', !v);
+  document.getElementById('rt_y').classList.toggle('on', v);
+  document.getElementById('retire_row').style.display = v ? 'flex' : 'none';
+}
+
+// ── 데이터 저장 ──
+let currentData = {};
+let proposalData = {};
+let hasProposal = false;
+
+function getVal(id) { return Number(document.getElementById(id)?.value || 0); }
+
+// ── 실비 세대별 상세 데이터 ──
+const silsonMap = {
+  '2009이전': { gen:'1세대 (표준화 이전)', pct:'급여 100% / 비급여 100%', limit:'입원 5천만원·통원 30만원/회', self:'없음 (일부 상품 존재)' },
+  '2009':     { gen:'1세대 (2009~2012)',   pct:'급여 100% / 비급여 100%', limit:'입원 5천만원·통원 30만원/회', self:'입원 없음·통원 5천원~1만원' },
+  '2013':     { gen:'2세대 (2013~2016)',   pct:'급여 100% / 비급여 100%', limit:'입원 5천만원·통원 30만원/회', self:'입원 없음·통원 1~2만원' },
+  '2017':     { gen:'3세대 (2017~2020)',   pct:'급여 90% / 비급여 80%',   limit:'입원 5천만원·통원 20만원/회', self:'급여 10%·비급여 20%' },
+  '2021':     { gen:'4세대 (2021~2023)',   pct:'급여 80% / 비급여 70%',   limit:'입원 5천만원·통원 20만원/회', self:'급여 20%·비급여 30%·특약별 상이' },
+  '2024':     { gen:'5세대 (2024~)',       pct:'급여 80% / 비급여 70%',   limit:'입원 5천만원·통원 20만원/회', self:'급여 20%·비급여 30%·도수 등 별도관리' },
+  '미가입':   { gen:'미가입', pct:'-', limit:'-', self:'-' },
+};
+
+// 런타임 권장금액 (사용자가 수정 가능)
+let customMax = {};
+let maxEditOpen = false;
+
+function toggleMaxEdit() {
+  maxEditOpen = !maxEditOpen;
+  document.getElementById('maxEditPanel').style.display = maxEditOpen ? 'flex' : 'none';
+  document.getElementById('maxEditArrow').style.transform = maxEditOpen ? 'rotate(180deg)' : '';
+}
+
+function buildMaxEditPanel() {
+  const panel = document.getElementById('maxEditPanel');
+  panel.innerHTML = '';
+  FIELDS.forEach(f => {
+    if (f.isRange) return; // 수술비는 제외
+    customMax[f.key] = f.max; // 초기값
+    const row = document.createElement('div');
+    row.className = 'fr';
+    row.innerHTML = `
+      <span class="fl" style="font-size:11px;">${f.label}</span>
+      <input type="number" class="fi-input-num" id="mx_${f.key}" value="${f.max}"
+        style="flex:1;height:30px;border:1px solid var(--gray2);border-radius:6px;padding:0 8px;font-size:12px;text-align:right;background:white;"
+        onchange="updateCustomMax('${f.key}', this.value)">
+      <span class="fi-unit">만원</span>
+    `;
+    panel.appendChild(row);
+  });
+}
+
+function updateCustomMax(key, val) {
+  const v = Number(val);
+  if (v > 0) {
+    customMax[key] = v;
+    // 그래프에 즉시 반영
+    refreshGraph();
+    // 라벨도 업데이트
+    const lbl = document.querySelector(`#row_${key} .bl-max`);
+    if (lbl) lbl.textContent = '권장: ' + (fmtDisplay(v) || v + '만원');
+  }
+}
+
+function buildGraph() {
+  const body = document.getElementById('graphBody');
+  body.innerHTML = '';
+  FIELDS.forEach(f => {
+    const maxVal = customMax[f.key] !== undefined ? customMax[f.key] : f.max;
+    const maxLabelSuffix = maxVal < 100 ? `${maxVal}만원` : fmtDisplay(maxVal);
+
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.id = 'row_'+f.key;
+    row.innerHTML = `
+      <div class="bar-label">
+        <strong>${f.label}</strong>
+        <span class="bl-max">권장: ${maxLabelSuffix}</span>
+      </div>
+      <div class="bar-track-wrap">
+        <div class="bar-group-row">
+          <span class="bar-group-label lc">현재</span>
+          <div class="bar-track">
+            <div class="bar-fill current" id="fill_c_${f.key}" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="bar-group-row" id="prow_${f.key}" style="display:none">
+          <span class="bar-group-label lp">제안</span>
+          <div class="bar-track">
+            <div class="bar-fill proposal" id="fill_p_${f.key}" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bar-val-wrap" id="valwrap_${f.key}">
+        <span class="bar-val vc no" id="valc_${f.key}">미가입</span>
+        <span class="bar-val vp" id="valp_${f.key}" style="display:none">-</span>
+      </div>
+    `;
+    body.appendChild(row);
+  });
+}
+
+// 단일값 항목 바 업데이트
+function updateBar(key, cVal, pVal, maxVal) {
+  const cap = customMax[key] !== undefined ? customMax[key] : maxVal;
+  const cPct = Math.min((cVal / cap) * 100, 100);
+
+  const fillC = document.getElementById('fill_c_'+key);
+  const fillP = document.getElementById('fill_p_'+key);
+  const prowEl = document.getElementById('prow_'+key);
+  const valC = document.getElementById('valc_'+key);
+  const valP = document.getElementById('valp_'+key);
+
+  if (fillC) fillC.style.width = cPct + '%';
+
+  const cd = fmtDisplay(cVal);
+  const overC = cVal > cap ? ` (+${fmtDisplay(cVal - cap)})` : '';
+  if (valC) {
+    valC.textContent = (cd || '미가입') + overC;
+    valC.className = 'bar-val vc' + (!cd ? ' no' : '');
+  }
+
+  if (pVal !== null && hasProposal) {
+    const pPct = Math.min((pVal / cap) * 100, 100);
+    if (fillP) fillP.style.width = pPct + '%';
+    if (prowEl) prowEl.style.display = '';
+    if (valP) {
+      const pd = fmtDisplay(pVal);
+      const overP = pVal > cap ? ` (+${fmtDisplay(pVal - cap)})` : '';
+      valP.textContent = (pd || '미가입') + overP;
+      valP.style.display = '';
+    }
+  }
+}
+
+// 범위(수술비) 항목 바 업데이트
+function updateRangeBar(key, cMin, cMax, pMin, pMax, maxVal) {
+  const effCMax = (cMax === 0 && cMin > 0) ? cMin : cMax;
+  const effPMax = pMax !== null ? ((pMax === 0 && pMin > 0) ? pMin : pMax) : null;
+
+  const cap = maxVal;
+  const cPct = Math.min((effCMax / cap) * 100, 100);
+
+  const fillC = document.getElementById('fill_c_'+key);
+  const fillP = document.getElementById('fill_p_'+key);
+  const prowEl = document.getElementById('prow_'+key);
+  const valC = document.getElementById('valc_'+key);
+  const valP = document.getElementById('valp_'+key);
+
+  if (fillC) fillC.style.width = cPct + '%';
+
+  const cStr = (cMin > 0 || effCMax > 0)
+    ? `${cMin > 0 ? fmtDisplay(cMin) : '0만원'}~${fmtDisplay(effCMax)||'0만원'}` : null;
+  if (valC) {
+    valC.textContent = cStr || '미가입';
+    valC.className = 'bar-val vc' + (!cStr ? ' no' : '');
+  }
+
+  if (pMin !== null && hasProposal) {
+    const pPct = Math.min(((effPMax||0) / cap) * 100, 100);
+    if (fillP) fillP.style.width = pPct + '%';
+    if (prowEl) prowEl.style.display = '';
+    if (valP) {
+      const pStr = (pMin > 0 || effPMax > 0)
+        ? `${pMin > 0 ? fmtDisplay(pMin) : '0만원'}~${fmtDisplay(effPMax)||'0만원'}` : '미가입';
+      valP.textContent = pStr;
+      valP.style.display = '';
+    }
+  }
+}
+
+// 미가입 항목을 하단으로 정렬
+function sortGraphRows() {
+  const body = document.getElementById('graphBody');
+  const rows = Array.from(body.querySelectorAll('.bar-row'));
+  // 현재·제안 모두 미가입인지 판단
+  const isEmpty = row => {
+    const key = row.id.replace('row_', '');
+    const vc = document.getElementById('valc_'+key);
+    const vp = document.getElementById('valp_'+key);
+    const cEmpty = !vc || vc.classList.contains('no');
+    const pEmpty = !vp || vp.style.display === 'none' || vp.classList.contains('no');
+    return cEmpty && pEmpty;
+  };
+  const filled = rows.filter(r => !isEmpty(r));
+  const empty  = rows.filter(r =>  isEmpty(r));
+  // 경계선 구분
+  if (empty.length > 0 && filled.length > 0) {
+    filled[filled.length-1].style.borderBottom = '2px dashed #cbd5e1';
+  }
+  [...filled, ...empty].forEach(r => body.appendChild(r));
+}
+
+// ── 현재보장 적용 ──
+function applyCurrentCoverage() {
+  currentData = {
+    death: getVal('c_death'),
+    cancer: getVal('c_cancer'),
+    minor_cancer: getVal('c_minor_cancer'),
+    brain_all: getVal('c_brain_all'),
+    stroke: getVal('c_stroke'),
+    hemorrhage: getVal('c_hemorrhage'),
+    heart_isch: getVal('c_heart_isch'),
+    heart_mi: getVal('c_heart_mi'),
+    chemo: getVal('c_chemo'),
+    cancer_tx: getVal('c_cancer_tx'),
+    brain_tx: getVal('c_brain_tx'),
+    heart_tx: getVal('c_heart_tx'),
+    dis_op_min: getVal('c_dis_op_min'),
+    dis_op_max: getVal('c_dis_op_max'),
+    acc_op_min: getVal('c_acc_op_min'),
+    acc_op_max: getVal('c_acc_op_max'),
+    dis_care: getVal('c_dis_care'),
+    acc_care: getVal('c_acc_care'),
+  };
+
+  // 실손 세대별 상세
+  const yr = document.getElementById('c_silson_year').value;
+  const tp = document.getElementById('c_silson_type').value;
+  const info = silsonMap[yr] || null;
+
+  document.getElementById('si_gen').textContent = info ? info.gen : '-';
+  document.getElementById('si_gen').className = 'sbi-val' + (!yr || yr==='미가입' ? ' dim' : '');
+  document.getElementById('si_type').textContent = tp ? (tp==='생명'?'생명보험사':'손해보험사') : '-';
+  document.getElementById('si_type').className = 'sbi-val' + (!tp ? ' dim' : '');
+
+  const showDetail = info && yr !== '미가입' && yr !== '';
+  ['si_div2','si_detail_wrap','si_div3','si_limit_wrap','si_div4','si_self_wrap'].forEach(id => {
+    document.getElementById(id).style.display = showDetail ? '' : 'none';
+  });
+  if (showDetail) {
+    document.getElementById('si_pct').textContent   = info.pct;
+    document.getElementById('si_limit').textContent = info.limit;
+    document.getElementById('si_self').textContent  = info.self;
+  }
+
+  refreshGraph();
+  showResult();
+  closeAll();
+}
+
+// ── 제안보장 적용 ──
+function applyProposal() {
+  proposalData = {
+    death: getVal('p_death'),
+    cancer: getVal('p_cancer'),
+    minor_cancer: getVal('p_minor_cancer'),
+    brain_all: getVal('p_brain_all'),
+    stroke: getVal('p_stroke'),
+    hemorrhage: getVal('p_hemorrhage'),
+    heart_isch: getVal('p_heart_isch'),
+    heart_mi: getVal('p_heart_mi'),
+    chemo: getVal('p_chemo'),
+    cancer_tx: getVal('p_cancer_tx'),
+    brain_tx: getVal('p_brain_tx'),
+    heart_tx: getVal('p_heart_tx'),
+    dis_op_min: getVal('p_dis_op_min'),
+    dis_op_max: getVal('p_dis_op_max'),
+    acc_op_min: getVal('p_acc_op_min'),
+    acc_op_max: getVal('p_acc_op_max'),
+    dis_care: getVal('p_dis_care'),
+    acc_care: getVal('p_acc_care'),
+  };
+  hasProposal = true;
+  document.getElementById('leg_proposal').style.display = '';
+
+  // 납입 바
+  const monthly = getVal('p_monthly');
+  document.getElementById('pb_monthly').textContent = monthly ? `${monthly}만원/월` : '-';
+  document.getElementById('pb_period').textContent = selPeriodVal;
+  document.getElementById('pb_waiver').textContent = getWaiverLabel();
+  const retAmt = hasRetire ? getVal('p_retire_amt') : 0;
+  document.getElementById('pb_retire').textContent = hasRetire && retAmt ? `있음 (${fmtDisplay(retAmt)})` : '없음';
+  document.getElementById('proposalBar').style.display = '';
+
+  refreshGraph();
+  showResult();
+  closeAll();
+}
+
+function refreshGraph() {
+  FIELDS.forEach(f => {
+    if (f.isRange) {
+      const cMin = currentData[f.key+'_min'] || 0;
+      const cMax = currentData[f.key+'_max'] || 0;
+      const pMin = hasProposal ? (proposalData[f.key+'_min'] || 0) : null;
+      const pMax = hasProposal ? (proposalData[f.key+'_max'] || 0) : null;
+      updateRangeBar(f.key, cMin, cMax, pMin, pMax, f.max);
+    } else {
+      const cVal = currentData[f.key] || 0;
+      const pVal = hasProposal ? (proposalData[f.key] || 0) : null;
+      updateBar(f.key, cVal, pVal, f.max);
+    }
+  });
+  sortGraphRows();
+}
+
+// ── 자료 목록 ──
+// 폴더명은 materials/ 하위의 실제 폴더명과 일치해야 합니다
+const MATERIALS = [
+  { name:'필수보장금액',           folder:'필수보장금액' },
+  { name:'실손의료비',             folder:'실손의료비' },
+  { name:'보장자산의 의의',        folder:'보장자산의_의의' },
+  { name:'갱신형/비갱신형',        folder:'갱신형_비갱신형' },
+  { name:'뇌혈관/허혈성',          folder:'뇌혈관_허혈성' },
+  { name:'중입자방사선치료',        folder:'중입자방사선치료' },
+  { name:'항암약물치료',           folder:'항암약물치료' },
+  { name:'주요치료비',             folder:'주요치료비' },
+  { name:'GI종신보험',             folder:'GI종신보험' },
+  { name:'밸런스핏',               folder:'밸런스핏' },
+  { name:'장기요양보험',           folder:'장기요양보험' },
+  { name:'생명보험사 / 손해보험사', folder:'생명_손해보험사' },
+  { name:'재해보장/상해보장',       folder:'재해_상해보장' },
+  { name:'담당자의 중요성',        folder:'담당자의_중요성' },
+  { name:'헬스케어서비스',         folder:'헬스케어서비스' },
+];
+const MAX_PAGES = 8;
+let curMat = null, curPage = 0;
+let curPages = []; // 현재 뷰어에 로드된 유효 URL 목록
+
+// 경로 기반으로 01.png ~ 08.png 순차 탐색, 404면 중단
+async function loadPages(folder) {
+  const urls = [];
+  for (let i = 1; i <= MAX_PAGES; i++) {
+    const n = String(i).padStart(2, '0');
+    const url = `materials/${folder}/${n}.png`;
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      if (!res.ok) break;
+      urls.push(url);
+    } catch { break; }
+  }
+  return urls;
+}
+
+function buildMaterialList() {
+  const list = document.getElementById('matList');
+  MATERIALS.forEach(m => {
+    const item = document.createElement('div');
+    item.className = 'mat-item';
+    item.id = 'mat_' + m.folder;
+    item.innerHTML = `<span class="mat-dot" id="dot_${m.folder}"></span>${m.name}`;
+    item.onclick = () => openViewer(m);
+    list.appendChild(item);
+  });
+}
+
+async function openViewer(mat) {
+  curMat = mat;
+  curPage = 0;
+  closeAll();
+  document.getElementById('vwTitle').textContent = mat.name;
+  MATERIALS.forEach(m => document.getElementById('mat_'+m.folder)?.classList.remove('on'));
+  document.getElementById('mat_'+mat.folder)?.classList.add('on');
+
+  // 로딩 표시
+  const ph = document.getElementById('vwPh');
+  ph.style.display = 'flex';
+  document.getElementById('vwPhText').textContent = '불러오는 중...';
+  document.getElementById('vwBody').querySelectorAll('img').forEach(i => i.remove());
+  document.getElementById('viewer').classList.add('on');
+
+  curPages = await loadPages(mat.folder);
+
+  if (!curPages.length) {
+    document.getElementById('vwPhText').textContent = `"${mat.name}" 이미지가 없습니다\n(materials/${mat.folder}/ 폴더를 확인하세요)`;
+    document.getElementById('vwPrev').disabled = true;
+    document.getElementById('vwNext').disabled = true;
+    document.getElementById('vwPi').textContent = '- / -';
+    // dot 유지 (없으면 gray)
+    return;
+  }
+
+  // dot 색상 업데이트
+  document.getElementById('dot_'+mat.folder)?.classList.add('loaded');
+  ph.style.display = 'none';
+  renderViewerPages();
+}
+
+function renderViewerPages() {
+  const body = document.getElementById('vwBody');
+  body.querySelectorAll('img').forEach(i => i.remove());
+  curPages.forEach((url, i) => {
+    const img = document.createElement('img');
+    img.src = url;
+    img.className = 'vw-img' + (i === curPage ? ' on' : '');
+    body.appendChild(img);
+  });
+  document.getElementById('vwPrev').disabled = curPage === 0;
+  document.getElementById('vwNext').disabled = curPage === curPages.length - 1;
+  document.getElementById('vwPi').textContent = `${curPage + 1} / ${curPages.length}`;
+}
+
+function closeViewer() { document.getElementById('viewer').classList.remove('on'); }
+
+function vwChangePage(dir) {
+  curPage = Math.max(0, Math.min(curPages.length - 1, curPage + dir));
+  document.querySelectorAll('#vwBody img').forEach((img, i) => img.classList.toggle('on', i === curPage));
+  document.getElementById('vwPrev').disabled = curPage === 0;
+  document.getElementById('vwNext').disabled = curPage === curPages.length - 1;
+  document.getElementById('vwPi').textContent = `${curPage + 1} / ${curPages.length}`;
+}
+
+// ── 메인 슬라이드쇼 (materials/main/) ──
+let msPages = [], msPage = 0;
+
+async function loadMainSlide() {
+  msPages = await loadPages('main');
+  const wrap = document.getElementById('msImgWrap');
+  const ph = document.getElementById('msPh');
+  if (!msPages.length) { ph.style.display = 'flex'; return; }
+  ph.style.display = 'none';
+  msPages.forEach((url, i) => {
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;display:' + (i===0?'block':'none');
+    img.id = 'msImg_' + i;
+    wrap.appendChild(img);
+  });
+  document.getElementById('msPrev').disabled = true;
+  document.getElementById('msNext').disabled = msPages.length <= 1;
+  document.getElementById('msPi').textContent = `1 / ${msPages.length}`;
+}
+
+function msChangePage(dir) {
+  const imgs = document.querySelectorAll('[id^="msImg_"]');
+  if (imgs[msPage]) imgs[msPage].style.display = 'none';
+  msPage = Math.max(0, Math.min(msPages.length - 1, msPage + dir));
+  if (imgs[msPage]) imgs[msPage].style.display = 'block';
+  document.getElementById('msPrev').disabled = msPage === 0;
+  document.getElementById('msNext').disabled = msPage === msPages.length - 1;
+  document.getElementById('msPi').textContent = `${msPage + 1} / ${msPages.length}`;
+}
+
+// 보장 입력 후 메인 슬라이드 숨기고 결과 표시
+function showResult() {
+  document.getElementById('mainSlide').style.display = 'none';
+  document.getElementById('result').classList.add('on');
+}
+
+document.addEventListener('keydown', e => {
+  if (document.getElementById('viewer').classList.contains('on')) {
+    if (e.key === 'ArrowLeft')  vwChangePage(-1);
+    if (e.key === 'ArrowRight') vwChangePage(1);
+    if (e.key === 'Escape')     closeViewer();
+  }
+});
+
+// 페이지 로드 시 메인 슬라이드 로딩
+window.addEventListener('load', () => { loadMainSlide(); });
+</script>
+</body>
+</html>
