@@ -19,6 +19,7 @@
   --text: #1e293b;
   --text2: #64748b;
   --bar-current: #2563b0;
+  --bar-current-after: #fca5a5;
   --bar-proposal: #16a34a;
   --bar-bg: #e2e8f0;
   --red: #dc2626;
@@ -301,14 +302,23 @@ header {
 .bar-fill {
   height: 100%; border-radius: 0;
   transition: width .55s cubic-bezier(.4,0,.2,1);
+  position: relative;
 }
-.bar-fill.current  { background: var(--bar-current); }
-.bar-fill.proposal { background: var(--bar-proposal); }
+.bar-fill.current {
+  background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, transparent 60%), var(--bar-current);
+}
+.bar-fill.current.after-proposal {
+  background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, transparent 60%), var(--bar-current-after);
+}
+.bar-fill.proposal {
+  background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, transparent 60%), var(--bar-proposal);
+}
 
 /* 오른쪽 수치 */
 .bar-val-wrap { flex: 0 0 88px; display: flex; flex-direction: column; gap: 2px; text-align: right; }
 .bar-val { font-size: 11.5px; font-weight: 600; color: var(--text); white-space: nowrap; }
 .bar-val.vc { color: var(--bar-current); }
+.bar-val.vc.pink { color: var(--bar-current-after); }
 .bar-val.vp { color: var(--bar-proposal); }
 .bar-val.no { color: var(--gray3); font-weight: 400; }
 
@@ -359,8 +369,8 @@ header {
 .vw-head { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; background: rgba(0,0,0,0.85); flex-shrink: 0; }
 .vw-title { color: var(--gold); font-size: 15px; font-weight: 700; }
 .vw-close { background: rgba(255,255,255,0.12); border: none; color: #fff; padding: 6px 14px; border-radius: 16px; font-size: 13px; cursor: pointer; }
-.vw-body { width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #000; }
-.vw-img { width: 100%; height: 100%; object-fit: contain; display: none; }
+.vw-body { width: 100%; flex: 1; position: relative; overflow: hidden; background: #000; min-height: 0; }
+.vw-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none; }
 .vw-img.on { display: block; }
 .vw-ph { display: flex; flex-direction: column; align-items: center; gap: 10px; color: rgba(255,255,255,0.3); }
 .vw-ph .vp-icon { font-size: 52px; }
@@ -404,6 +414,8 @@ header {
 #graphBody .bar-val { font-size: 0.85rem; }
 #graphBody .bar-group-label { flex: 0 0 32px; font-size: 0.72rem; }
 #graphBody .bar-track { height: 17px; }
+
+.bar-val.pink { color: #f87171 !important; }
 
 /* scrollbar */
 ::-webkit-scrollbar { width: 3px; }
@@ -612,6 +624,16 @@ header {
     <!-- 제안보장 패널 -->
     <div class="sb-panel" id="panel1">
 
+      <!-- 프리셋 -->
+      <div class="fg sec-premium">
+        <div class="fg-title">⚡ 빠른 입력 (프리셋)</div>
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:2px;">
+          <button class="apply-btn" style="font-size:11px; padding:8px; background:#1e3a5f; text-align:left;" onclick="applyPreset(0)">① 통합건강보험 ONE · 슈퍼ONE · 라이트ONE</button>
+          <button class="apply-btn" style="font-size:11px; padding:8px; background:#1e3a5f; text-align:left;" onclick="applyPreset(1)">② 놀라운종신보험</button>
+          <button class="apply-btn" style="font-size:11px; padding:8px; background:#1e3a5f; text-align:left;" onclick="applyPreset(2)">③ 밸런스핏 + 올페이</button>
+        </div>
+      </div>
+
       <div class="fg sec-death">
         <div class="fg-title">🛡 사망</div>
         <div class="fr">
@@ -696,14 +718,14 @@ header {
         <div class="fg-title">🔪 수술비</div>
         <div class="fr fr-mm">
           <span class="fl">질병수술비</span>
-          <select class="fi-select" id="p_dis_op_min"></select>
+          <select class="fi-select" id="p_dis_op_min" onchange="autoOpMax('p_dis')"></select>
           <span class="mm-sep">~</span>
           <select class="fi-select" id="p_dis_op_max"></select>
           <span class="fi-unit">만원</span>
         </div>
         <div class="fr fr-mm">
           <span class="fl">상해수술비</span>
-          <select class="fi-select" id="p_acc_op_min"></select>
+          <select class="fi-select" id="p_acc_op_min" onchange="autoOpMax('p_acc')"></select>
           <span class="mm-sep">~</span>
           <select class="fi-select" id="p_acc_op_max"></select>
           <span class="fi-unit">만원</span>
@@ -810,59 +832,67 @@ header {
 
     <div class="result" id="result">
 
-      <!-- 실손 + 월보험료 통합 배지 -->
-      <div class="silson-badge" id="silsonBadge">
-        <!-- 왼쪽: 실손 정보 -->
-        <div class="sb-item">
-          <span class="sbi-label">실손의료비</span>
-          <span class="sbi-val" id="si_gen">-</span>
+      <!-- 실손 + 월보험료 통합 배지 (2행) -->
+      <div id="silsonBadge" style="background:var(--navy);border-radius:var(--radius);overflow:hidden;">
+        <!-- 1행: 실손 정보 -->
+        <div class="silson-badge" style="border-bottom:1px solid rgba(255,255,255,0.1); padding:12px 20px;">
+          <div class="sb-item">
+            <span class="sbi-label">실손의료비</span>
+            <span class="sbi-val" id="si_gen">-</span>
+          </div>
+          <div class="sb-div"></div>
+          <div class="sb-item">
+            <span class="sbi-label">보험사 구분</span>
+            <span class="sbi-val" id="si_type">-</span>
+          </div>
+          <div class="sb-div" id="si_div2" style="display:none"></div>
+          <div class="sb-item" id="si_detail_wrap" style="display:none">
+            <span class="sbi-label">급여 / 비급여</span>
+            <span class="sbi-val" id="si_pct">-</span>
+          </div>
+          <div class="sb-div" id="si_div3" style="display:none"></div>
+          <div class="sb-item" id="si_limit_wrap" style="display:none">
+            <span class="sbi-label">보장 한도</span>
+            <span class="sbi-val" id="si_limit">-</span>
+          </div>
+          <div class="sb-div" id="si_div4" style="display:none"></div>
+          <div class="sb-item" id="si_self_wrap" style="display:none">
+            <span class="sbi-label">자기부담금</span>
+            <span class="sbi-val" id="si_self">-</span>
+          </div>
         </div>
-        <div class="sb-div"></div>
-        <div class="sb-item">
-          <span class="sbi-label">보험사 구분</span>
-          <span class="sbi-val" id="si_type">-</span>
-        </div>
-        <div class="sb-div" id="si_div2" style="display:none"></div>
-        <div class="sb-item" id="si_detail_wrap" style="display:none">
-          <span class="sbi-label">급여 / 비급여</span>
-          <span class="sbi-val" id="si_pct">-</span>
-        </div>
-        <div class="sb-div" id="si_div3" style="display:none"></div>
-        <div class="sb-item" id="si_limit_wrap" style="display:none">
-          <span class="sbi-label">보장 한도</span>
-          <span class="sbi-val" id="si_limit">-</span>
-        </div>
-        <div class="sb-div" id="si_div4" style="display:none"></div>
-        <div class="sb-item" id="si_self_wrap" style="display:none">
-          <span class="sbi-label">자기부담금</span>
-          <span class="sbi-val" id="si_self">-</span>
-        </div>
-        <!-- 오른쪽: 월보험료 (제안 적용 후 표시) -->
-        <div style="flex:1"></div>
-        <div id="monthly_badge" style="display:none; display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:flex-end;">
+        <!-- 2행: 월보험료 (제안 적용 후 표시) -->
+        <div id="monthly_badge" style="display:none; padding:10px 20px; align-items:center; gap:12px; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,0.1);">
+          <!-- 왼쪽: 납입조건 -->
+          <div class="sb-item">
+            <span class="sbi-label">납입기간</span>
+            <span class="sbi-val" id="pb_period" style="font-size:19px;">-</span>
+          </div>
+          <div class="sb-div"></div>
+          <div class="sb-item">
+            <span class="sbi-label">납입면제</span>
+            <span class="sbi-val" id="pb_waiver" style="font-size:19px;">-</span>
+          </div>
+          <div class="sb-div"></div>
+          <div class="sb-item">
+            <span class="sbi-label">노후자금</span>
+            <span class="sbi-val" id="pb_retire" style="font-size:19px;">-</span>
+          </div>
+          <div style="flex:1"></div>
+          <!-- 오른쪽: 월보험료 강조 -->
           <div class="sb-item" style="text-align:right">
             <span class="sbi-label">현재 총 월보험료</span>
-            <span class="sbi-val" id="pb_cur_total" style="color:rgba(255,255,255,0.7)">-</span>
+            <span class="sbi-val" id="pb_cur_total" style="font-size:24px; color:rgba(255,255,255,0.7);">-</span>
           </div>
           <div class="sb-div"></div>
           <div class="sb-item" style="text-align:right">
             <span class="sbi-label">갱신형 포함</span>
-            <span class="sbi-val" id="pb_cur_renew" style="color:#fca5a5">-</span>
+            <span class="sbi-val" id="pb_cur_renew" style="font-size:24px; color:#fca5a5;">-</span>
           </div>
           <div class="sb-div"></div>
-          <div class="sb-item" style="text-align:right">
-            <span class="sbi-label">변경 후 월보험료</span>
-            <span class="sbi-val" id="pb_new_total" style="color:var(--gold-light); font-size:16px;">-</span>
-          </div>
-          <div class="sb-div"></div>
-          <div class="sb-item" style="text-align:right">
-            <span class="sbi-label">납입기간 · 면제</span>
-            <span class="sbi-val" id="pb_period_waiver" style="font-size:11px;">-</span>
-          </div>
-          <div class="sb-div"></div>
-          <div class="sb-item" style="text-align:right">
-            <span class="sbi-label">노후자금</span>
-            <span class="sbi-val" id="pb_retire">-</span>
+          <div class="sb-item" style="text-align:right; background:rgba(255,255,255,0.08); padding:7px 14px; border-radius:8px;">
+            <span class="sbi-label" style="color:var(--gold);">변경 후 월보험료</span>
+            <span class="sbi-val" id="pb_new_total" style="font-size:28px; color:var(--gold-light); font-weight:900;">-</span>
           </div>
         </div>
       </div>
@@ -993,16 +1023,13 @@ function populateSelWithDirect(id, fixedMax, step) {
 // 직접입력 선택 시 input 행 토글
 function handleDirectInput(selId, inputId) {
   const sel = document.getElementById(selId);
-  const rowId = inputId + '_row';
-  // inputId에서 _row suffix를 붙인 row를 찾되 없으면 inputId의 parent fr을 찾음
-  const row = document.getElementById(rowId) || document.getElementById(selId.replace(selId.split('_').pop(), '') + inputId.split('_').slice(-1)[0] + '_row');
-  // row element는 select의 부모 fr 다음 fr
-  const selFr = sel?.closest('.fr');
-  const nextFr = selFr?.nextElementSibling;
-  if (sel?.value === 'direct') {
-    if (nextFr && nextFr.id && nextFr.id.includes('direct')) nextFr.style.display = 'flex';
+  if (!sel) return;
+  const selFr = sel.closest('.fr');
+  const nextFr = selFr ? selFr.nextElementSibling : null;
+  if (sel.value === 'direct') {
+    if (nextFr && nextFr.id && nextFr.id.indexOf('direct') !== -1) nextFr.style.display = 'flex';
   } else {
-    if (nextFr && nextFr.id && nextFr.id.includes('direct')) nextFr.style.display = 'none';
+    if (nextFr && nextFr.id && nextFr.id.indexOf('direct') !== -1) nextFr.style.display = 'none';
   }
 }
 
@@ -1011,9 +1038,10 @@ function getMonthlyVal(selId, directId) {
   const sel = document.getElementById(selId);
   if (!sel) return 0;
   if (sel.value === 'direct') {
-    return Number(document.getElementById(directId)?.value || 0);
+    const el = document.getElementById(directId);
+    return Number(el ? el.value : 0) || 0;
   }
-  return Number(sel.value || 0);
+  return Number(sel.value) || 0;
 }
 
 // 모든 select 초기화
@@ -1127,7 +1155,7 @@ let currentData = {};
 let proposalData = {};
 let hasProposal = false;
 
-function getVal(id) { return Number(document.getElementById(id)?.value || 0); }
+function getVal(id) { var el = document.getElementById(id); return Number(el ? el.value : 0) || 0; }
 
 // ── 실비 세대별 상세 데이터 ──
 const silsonMap = {
@@ -1242,13 +1270,16 @@ function updateBar(key, cVal, pVal, maxVal) {
   const valC = document.getElementById('valc_'+key);
   const valP = document.getElementById('valp_'+key);
 
-  if (fillC) fillC.style.width = cPct + '%';
+  if (fillC) {
+    fillC.style.width = cPct + '%';
+    fillC.classList.toggle('after-proposal', hasProposal);
+  }
 
   const cd = fmtDisplay(cVal);
   const overC = cVal > cap ? ` (+${fmtDisplay(cVal - cap)})` : '';
   if (valC) {
     valC.textContent = (cd || '미가입') + overC;
-    valC.className = 'bar-val vc' + (!cd ? ' no' : '');
+    valC.className = 'bar-val vc' + (!cd ? ' no' : '') + (hasProposal ? ' pink' : '');
   }
 
   if (pVal !== null && hasProposal) {
@@ -1278,13 +1309,16 @@ function updateRangeBar(key, cMin, cMax, pMin, pMax, maxVal) {
   const valC = document.getElementById('valc_'+key);
   const valP = document.getElementById('valp_'+key);
 
-  if (fillC) fillC.style.width = cPct + '%';
+  if (fillC) {
+    fillC.style.width = cPct + '%';
+    fillC.classList.toggle('after-proposal', hasProposal);
+  }
 
   const cStr = (cMin > 0 || effCMax > 0)
-    ? `${cMin > 0 ? fmtDisplay(cMin) : '0만원'}~${fmtDisplay(effCMax)||'0만원'}` : null;
+    ? (fmtDisplay(cMin > 0 ? cMin : 0) || '0만원') + '~' + (fmtDisplay(effCMax) || '0만원') : null;
   if (valC) {
     valC.textContent = cStr || '미가입';
-    valC.className = 'bar-val vc' + (!cStr ? ' no' : '');
+    valC.className = 'bar-val vc' + (!cStr ? ' no' : '') + (hasProposal ? ' pink' : '');
   }
 
   if (pMin !== null && hasProposal) {
@@ -1300,11 +1334,12 @@ function updateRangeBar(key, cMin, cMax, pMin, pMax, maxVal) {
   }
 }
 
-// 미가입 항목을 하단으로 정렬
+// 미가입 항목만 하단으로 (FIELDS 원래 순서 완전 유지)
 function sortGraphRows() {
   const body = document.getElementById('graphBody');
   const rows = Array.from(body.querySelectorAll('.bar-row'));
-  // 현재·제안 모두 미가입인지 판단
+  const keyOrder = FIELDS.map(f => f.key);
+
   const isEmpty = row => {
     const key = row.id.replace('row_', '');
     const vc = document.getElementById('valc_'+key);
@@ -1313,13 +1348,134 @@ function sortGraphRows() {
     const pEmpty = !vp || vp.style.display === 'none' || vp.classList.contains('no');
     return cEmpty && pEmpty;
   };
-  const filled = rows.filter(r => !isEmpty(r));
-  const empty  = rows.filter(r =>  isEmpty(r));
-  // 경계선 구분
+
+  // FIELDS 순서 그대로 분리 (정렬 없음)
+  const ordered = keyOrder.map(k => rows.find(r => r.id === 'row_'+k)).filter(Boolean);
+  const filled = ordered.filter(r => !isEmpty(r));
+  const empty  = ordered.filter(r =>  isEmpty(r));
+
+  rows.forEach(r => { if (r.style.borderBottom.includes('dashed')) r.style.borderBottom = ''; });
   if (empty.length > 0 && filled.length > 0) {
     filled[filled.length-1].style.borderBottom = '2px dashed #cbd5e1';
   }
   [...filled, ...empty].forEach(r => body.appendChild(r));
+}
+
+// 권장금액 수정 시 그래프 전체 재빌드 후 데이터 반영
+function updateCustomMax(key, val) {
+  const v = Number(val);
+  if (v <= 0) return;
+  customMax[key] = v;
+  // 입력란 권장금액 수정 패널도 sync
+  const inp = document.getElementById('mx_'+key);
+  if (inp && Number(inp.value) !== v) inp.value = v;
+  buildGraph();
+  if (Object.keys(currentData).length > 0) refreshGraph();
+}
+
+// 수술비 최소 10 선택 시 최대 자동 1000만
+function autoOpMax(prefix) {
+  const minSel = document.getElementById(prefix+'_op_min');
+  const maxSel = document.getElementById(prefix+'_op_max');
+  if (!minSel || !maxSel) return;
+  if (Number(minSel.value) === 10) {
+    for (let i = 0; i < maxSel.options.length; i++) {
+      if (Number(maxSel.options[i].value) === 1000) {
+        maxSel.selectedIndex = i; break;
+      }
+    }
+  }
+}
+
+// 제안보장 프리셋
+const PRESETS = [
+  {
+    name: '통합건강보험 ONE',
+    data: {
+      death:200, cancer:5000, minor_cancer:1000,
+      brain_all:'max', stroke:'max', hemorrhage:'max',
+      heart_isch:'max', heart_mi:'max',
+      chemo:'max', cancer_tx:'max', brain_tx:'max', heart_tx:'max',
+      dis_op_min:10, dis_op_max:1000,
+      acc_op_min:10, acc_op_max:1000,
+      dis_care:'max', acc_care:'max',
+      retire:false, retire_amt:0
+    }
+  },
+  {
+    name: '놀라운종신보험',
+    data: {
+      death:5000, cancer:5000, minor_cancer:400,
+      brain_all:1000, stroke:1000, hemorrhage:5000,
+      heart_isch:1000, heart_mi:5000,
+      chemo:0, cancer_tx:0, brain_tx:0, heart_tx:0,
+      dis_op_min:10, dis_op_max:1000,
+      acc_op_min:10, acc_op_max:1000,
+      dis_care:0, acc_care:0,
+      retire:true, retire_amt:6000,
+      waiver:['암/뇌/심','50%장해']
+    }
+  },
+  {
+    name: '밸런스핏+올페이',
+    data: {
+      death:10000, cancer:5000, minor_cancer:0,
+      brain_all:5000, stroke:5000, hemorrhage:5000,
+      heart_isch:5000, heart_mi:5000,
+      chemo:0, cancer_tx:3000, brain_tx:3000, heart_tx:3000,
+      dis_op_min:0, dis_op_max:0,
+      acc_op_min:0, acc_op_max:0,
+      dis_care:0, acc_care:0,
+      retire:true, retire_amt:10000,
+      waiver:['암/뇌/심','50%장해']
+    }
+  }
+];
+
+function applyPreset(idx) {
+  const p = PRESETS[idx];
+  if (!p) return;
+  const d = p.data;
+
+  const setSelVal = (id, val) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const realVal = val === 'max' ? (customMax[id.replace('p_','')] || 0) : val;
+    for (let i = 0; i < sel.options.length; i++) {
+      if (Number(sel.options[i].value) === Number(realVal)) { sel.selectedIndex = i; return; }
+    }
+    sel.selectedIndex = 0;
+  };
+
+  // 단순키 매핑
+  ['death','cancer','minor_cancer','brain_all','stroke','hemorrhage',
+   'heart_isch','heart_mi','chemo','cancer_tx','brain_tx','heart_tx',
+   'dis_care','acc_care'].forEach(k => {
+    const val = d[k];
+    if (val === 'max') setSelVal('p_'+k, customMax[k] || 0);
+    else setSelVal('p_'+k, val);
+  });
+
+  // 수술비
+  setSelVal('p_dis_op_min', d.dis_op_min);
+  setSelVal('p_dis_op_max', d.dis_op_max);
+  setSelVal('p_acc_op_min', d.acc_op_min);
+  setSelVal('p_acc_op_max', d.acc_op_max);
+
+  // 노후자금
+  setRetire(d.retire);
+  if (d.retire && d.retire_amt) setSelVal('p_retire_amt', d.retire_amt);
+
+  // 납입면제
+  if (d.waiver) {
+    waiverSet.clear();
+    d.waiver.forEach(w => waiverSet.add(w));
+  } else {
+    waiverSet.clear(); waiverSet.add('없음');
+  }
+  document.getElementById('waiver_none').classList.toggle('on', waiverSet.has('없음'));
+  document.getElementById('waiver_aci').classList.toggle('on',  waiverSet.has('암/뇌/심'));
+  document.getElementById('waiver_dis').classList.toggle('on',  waiverSet.has('50%장해'));
 }
 
 // ── 현재보장 적용 ──
@@ -1408,7 +1564,8 @@ function applyProposal() {
   document.getElementById('pb_cur_total').textContent  = curTotal  ? `${curTotal}만원/월`  : '-';
   document.getElementById('pb_cur_renew').textContent  = curRenew  ? `${curRenew}만원/월`  : '-';
   document.getElementById('pb_new_total').textContent  = newMonthly ? `${newTotal}만원/월` : '-';
-  document.getElementById('pb_period_waiver').textContent = `${selPeriodVal} · ${getWaiverLabel()}`;
+  document.getElementById('pb_period').textContent = selPeriodVal;
+  document.getElementById('pb_waiver').textContent = getWaiverLabel();
   const retAmt = hasRetire ? getVal('p_retire_amt') : 0;
   document.getElementById('pb_retire').textContent = hasRetire && retAmt ? `있음 (${fmtDisplay(retAmt)})` : '없음';
   document.getElementById('monthly_badge').style.display = 'flex';
@@ -1490,8 +1647,12 @@ async function openViewer(mat) {
   curPage = 0;
   closeAll();
   document.getElementById('vwTitle').textContent = mat.name;
-  MATERIALS.forEach(m => document.getElementById('mat_'+m.folder)?.classList.remove('on'));
-  document.getElementById('mat_'+mat.folder)?.classList.add('on');
+  MATERIALS.forEach(function(m) {
+    var el = document.getElementById('mat_'+m.folder);
+    if (el) el.classList.remove('on');
+  });
+  var activeEl = document.getElementById('mat_'+mat.folder);
+  if (activeEl) activeEl.classList.add('on');
 
   // 로딩 표시
   const ph = document.getElementById('vwPh');
@@ -1512,7 +1673,8 @@ async function openViewer(mat) {
   }
 
   // dot 색상 업데이트
-  document.getElementById('dot_'+mat.folder)?.classList.add('loaded');
+  var dotEl = document.getElementById('dot_'+mat.folder);
+  if (dotEl) dotEl.classList.add('loaded');
   ph.style.display = 'none';
   renderViewerPages();
 }
