@@ -361,29 +361,62 @@ header {
 /* ── VIEWER MODAL ── */
 .viewer {
   display: none; position: fixed; inset: 0;
-  background: #000; z-index: 300;
-  flex-direction: column; align-items: stretch; justify-content: stretch;
-  padding: 0;
+  z-index: 300;
 }
-.viewer.on { display: flex; }
-.vw-head { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 10px 18px; background: rgba(0,0,0,0.85); flex-shrink: 0; }
-.vw-title { color: var(--gold); font-size: 15px; font-weight: 700; }
-.vw-close { background: rgba(255,255,255,0.12); border: none; color: #fff; padding: 6px 14px; border-radius: 16px; font-size: 13px; cursor: pointer; }
-.vw-body { width: 100%; flex: 1; position: relative; overflow: hidden; background: #000; min-height: 0; }
-.vw-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: none; }
+.viewer.on { display: block; }
+
+/* 이미지가 뷰어 전체를 꽉 채움 */
+.vw-img {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: none;
+}
 .vw-img.on { display: block; }
-.vw-ph { display: flex; flex-direction: column; align-items: center; gap: 10px; color: rgba(255,255,255,0.3); }
+
+/* 로딩/에러 플레이스홀더 */
+.vw-ph {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; color: rgba(255,255,255,0.4); background: #000;
+}
 .vw-ph .vp-icon { font-size: 52px; }
 .vw-ph .vp-text { font-size: 14px; }
-.vw-nav { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 10px; background: rgba(0,0,0,0.85); flex-shrink: 0; }
+
+/* 상단 오버레이 바 (타이틀 + 닫기) */
+.vw-head {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+  z-index: 301;
+}
+.vw-title { color: var(--gold); font-size: 16px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+.vw-close {
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; padding: 7px 16px; border-radius: 20px; font-size: 14px; cursor: pointer;
+}
+
+/* 하단 오버레이 바 (페이지 네비) */
+.vw-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: center; gap: 20px;
+  padding: 14px;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
+  z-index: 301;
+}
 .vw-nbtn {
-  width: 50px; height: 50px; background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2); color: #fff;
-  border-radius: 50%; font-size: 24px; cursor: pointer;
+  width: 52px; height: 52px;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; border-radius: 50%; font-size: 26px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; transition: all .15s;
 }
+.vw-nbtn:hover { background: rgba(0,0,0,0.7); }
 .vw-nbtn:disabled { opacity: .25; cursor: not-allowed; }
-.vw-pi { color: rgba(255,255,255,0.6); font-size: 15px; min-width: 60px; text-align: center; }
+.vw-pi { color: rgba(255,255,255,0.85); font-size: 16px; min-width: 64px; text-align: center; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+
+/* vwBody는 이미지/플레이스홀더 컨테이너 역할만 */
+.vw-body { position: fixed; inset: 0; z-index: 300; }
 
 /* ── 섹션별 배경 색상 ── */
 .fg.sec-death   { background:#f0f4ff; border-color:#c8d8f8; }
@@ -930,16 +963,19 @@ header {
 
 <!-- VIEWER -->
 <div class="viewer" id="viewer">
-  <div class="vw-head">
-    <span class="vw-title" id="vwTitle">-</span>
-    <button class="vw-close" onclick="closeViewer()">✕ 닫기</button>
-  </div>
+  <!-- 이미지/플레이스홀더 (배경 꽉참) -->
   <div class="vw-body" id="vwBody">
     <div class="vw-ph" id="vwPh">
       <div class="vp-icon">🖼️</div>
       <div class="vp-text" id="vwPhText">이미지를 불러오는 중...</div>
     </div>
   </div>
+  <!-- 상단 오버레이: 타이틀 + 닫기 -->
+  <div class="vw-head">
+    <span class="vw-title" id="vwTitle">-</span>
+    <button class="vw-close" onclick="closeViewer()">✕ 닫기</button>
+  </div>
+  <!-- 하단 오버레이: 페이지 네비 -->
   <div class="vw-nav">
     <button class="vw-nbtn" id="vwPrev" onclick="vwChangePage(-1)" disabled>‹</button>
     <span class="vw-pi" id="vwPi">- / -</span>
