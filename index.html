@@ -210,7 +210,7 @@ header {
 .apply-btn.gold { background: var(--gold); color: var(--navy); }
 
 /* ── MAIN ── */
-.main { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.main { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; position: relative; }
 
 /* 플레이스홀더 */
 .ph {
@@ -365,7 +365,6 @@ header {
 }
 .viewer.on { display: block; }
 
-/* 이미지가 뷰어 전체를 꽉 채움 */
 .vw-img {
   position: fixed; inset: 0;
   width: 100%; height: 100%;
@@ -374,7 +373,6 @@ header {
 }
 .vw-img.on { display: block; }
 
-/* 로딩/에러 플레이스홀더 */
 .vw-ph {
   position: fixed; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -383,39 +381,36 @@ header {
 .vw-ph .vp-icon { font-size: 52px; }
 .vw-ph .vp-text { font-size: 14px; }
 
-/* 상단 오버레이 바 (타이틀 + 닫기) */
+/* 상단 오버레이: 닫기 버튼만 (타이틀 없음) */
 .vw-head {
-  position: fixed; top: 0; left: 0; right: 0;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 20px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+  position: fixed; top: 0; right: 0;
+  padding: 14px 18px;
   z-index: 301;
 }
-.vw-title { color: var(--gold); font-size: 16px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
 .vw-close {
-  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.3);
-  color: #fff; padding: 7px 16px; border-radius: 20px; font-size: 14px; cursor: pointer;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.55);
+  padding: 7px 16px; border-radius: 20px; font-size: 14px; cursor: pointer;
 }
 
-/* 하단 오버레이 바 (페이지 네비) */
+/* 하단 오버레이: 네비 버튼만, 그라데이션 없음 */
 .vw-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   display: flex; align-items: center; justify-content: center; gap: 20px;
   padding: 14px;
-  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
   z-index: 301;
 }
 .vw-nbtn {
   width: 52px; height: 52px;
-  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.3);
-  color: #fff; border-radius: 50%; font-size: 26px; cursor: pointer;
+  background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7); border-radius: 50%; font-size: 26px; cursor: pointer;
   display: flex; align-items: center; justify-content: center; transition: all .15s;
 }
-.vw-nbtn:hover { background: rgba(0,0,0,0.7); }
-.vw-nbtn:disabled { opacity: .25; cursor: not-allowed; }
-.vw-pi { color: rgba(255,255,255,0.85); font-size: 16px; min-width: 64px; text-align: center; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+.vw-nbtn:hover { background: rgba(0,0,0,0.55); }
+.vw-nbtn:disabled { opacity: .2; cursor: not-allowed; }
+.vw-pi { color: rgba(255,255,255,0.7); font-size: 16px; min-width: 64px; text-align: center; font-weight: 600; }
 
-/* vwBody는 이미지/플레이스홀더 컨테이너 역할만 */
 .vw-body { position: fixed; inset: 0; z-index: 300; }
 
 /* ── 섹션별 배경 색상 ── */
@@ -660,10 +655,13 @@ header {
       <!-- 프리셋 -->
       <div class="fg sec-premium">
         <div class="fg-title">⚡ 빠른 입력 (프리셋)</div>
-        <div style="display:flex; flex-direction:column; gap:6px; margin-top:2px;">
-          <button class="apply-btn" style="font-size:11px; padding:8px; background:#1e3a5f; text-align:left;" onclick="applyPreset(0)">① 통합건강보험 ONE · 슈퍼ONE · 라이트ONE</button>
-          <button class="apply-btn" style="font-size:11px; padding:8px; background:#1e3a5f; text-align:left;" onclick="applyPreset(1)">② 놀라운종신보험</button>
-          <button class="apply-btn" style="font-size:11px; padding:8px; background:#1e3a5f; text-align:left;" onclick="applyPreset(2)">③ 밸런스핏 + 올페이</button>
+        <div class="fr" style="margin-top:4px;">
+          <select class="fi-select" id="presetSelect" onchange="applyPresetFromSelect()" style="flex:1;">
+            <option value="">-- 프리셋 선택 --</option>
+            <option value="0">① 통합건강보험 ONE · 슈퍼ONE · 라이트ONE</option>
+            <option value="1">② 놀라운종신보험</option>
+            <option value="2">③ 밸런스핏 + 올페이</option>
+          </select>
         </div>
       </div>
 
@@ -849,16 +847,16 @@ header {
   <main class="main" id="mainArea">
 
     <!-- 메인 슬라이드쇼 (고객정보 미입력 시) -->
-    <div id="mainSlide" style="flex:1; display:flex; flex-direction:column; background:#111; border-radius:var(--radius); overflow:hidden; position:relative; min-height:0;">
-      <div id="msImgWrap" style="flex:1; display:flex; align-items:center; justify-content:center; min-height:0; position:relative;">
-        <div id="msPh" style="display:flex;flex-direction:column;align-items:center;gap:10px;color:rgba(255,255,255,0.25);">
+    <div id="mainSlide" style="position:absolute;inset:0;background:#000;overflow:hidden;">
+      <div id="msImgWrap" style="position:absolute;inset:0;">
+        <div id="msPh" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:rgba(255,255,255,0.25);">
           <div style="font-size:48px;">📋</div>
           <div style="font-size:14px;">materials/main/ 폴더에 이미지를 추가하세요</div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;background:rgba(0,0,0,0.4);">
+      <div style="position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:20px;padding:14px;z-index:10;">
         <button class="vw-nbtn" id="msPrev" onclick="msChangePage(-1)" disabled>‹</button>
-        <span style="color:rgba(255,255,255,0.6);font-size:13px;" id="msPi">- / -</span>
+        <span style="color:rgba(255,255,255,0.7);font-size:16px;font-weight:600;" id="msPi">- / -</span>
         <button class="vw-nbtn" id="msNext" onclick="msChangePage(1)" disabled>›</button>
       </div>
     </div>
@@ -963,19 +961,15 @@ header {
 
 <!-- VIEWER -->
 <div class="viewer" id="viewer">
-  <!-- 이미지/플레이스홀더 (배경 꽉참) -->
   <div class="vw-body" id="vwBody">
     <div class="vw-ph" id="vwPh">
       <div class="vp-icon">🖼️</div>
       <div class="vp-text" id="vwPhText">이미지를 불러오는 중...</div>
     </div>
   </div>
-  <!-- 상단 오버레이: 타이틀 + 닫기 -->
   <div class="vw-head">
-    <span class="vw-title" id="vwTitle">-</span>
     <button class="vw-close" onclick="closeViewer()">✕ 닫기</button>
   </div>
-  <!-- 하단 오버레이: 페이지 네비 -->
   <div class="vw-nav">
     <button class="vw-nbtn" id="vwPrev" onclick="vwChangePage(-1)" disabled>‹</button>
     <span class="vw-pi" id="vwPi">- / -</span>
@@ -986,7 +980,7 @@ header {
 <script>
 // ── 상수: 필요보장금액(max), 드롭다운 단위 ──
 const FIELDS = [
-  { key:'death',        label:'사망보장금',          max:50000, step:500  },
+  { key:'death',        label:'사망보장금',          max:30000, step:500  },
   { key:'cancer',       label:'암진단금',             max:10000, step:500  },
   { key:'minor_cancer', label:'소액암진단금',          max:5000,  step:100  },
   { key:'brain_all',    label:'뇌혈관질환 진단',       max:2000,  step:500  },
@@ -1455,10 +1449,10 @@ const PRESETS = [
   {
     name: '밸런스핏+올페이',
     data: {
-      death:10000, cancer:5000, minor_cancer:0,
+      death:10000, cancer:5000, minor_cancer:400,
       brain_all:5000, stroke:5000, hemorrhage:5000,
       heart_isch:5000, heart_mi:5000,
-      chemo:0, cancer_tx:3000, brain_tx:3000, heart_tx:3000,
+      chemo:3000, cancer_tx:3000, brain_tx:3000, heart_tx:3000,
       dis_op_min:0, dis_op_max:0,
       acc_op_min:0, acc_op_max:0,
       dis_care:0, acc_care:0,
@@ -1467,6 +1461,13 @@ const PRESETS = [
     }
   }
 ];
+
+function applyPresetFromSelect() {
+  const sel = document.getElementById('presetSelect');
+  if (!sel || sel.value === '') return;
+  applyPreset(Number(sel.value));
+  sel.selectedIndex = 0; // 적용 후 선택 초기화
+}
 
 function applyPreset(idx) {
   const p = PRESETS[idx];
@@ -1748,16 +1749,16 @@ async function loadMainSlide() {
   const ph = document.getElementById('msPh');
   if (!msPages.length) { ph.style.display = 'flex'; return; }
   ph.style.display = 'none';
-  msPages.forEach((url, i) => {
+  msPages.forEach(function(url, i) {
     const img = document.createElement('img');
     img.src = url;
-    img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;display:' + (i===0?'block':'none');
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:' + (i===0?'block':'none');
     img.id = 'msImg_' + i;
     wrap.appendChild(img);
   });
   document.getElementById('msPrev').disabled = true;
   document.getElementById('msNext').disabled = msPages.length <= 1;
-  document.getElementById('msPi').textContent = `1 / ${msPages.length}`;
+  document.getElementById('msPi').textContent = '1 / ' + msPages.length;
 }
 
 function msChangePage(dir) {
@@ -1767,7 +1768,7 @@ function msChangePage(dir) {
   if (imgs[msPage]) imgs[msPage].style.display = 'block';
   document.getElementById('msPrev').disabled = msPage === 0;
   document.getElementById('msNext').disabled = msPage === msPages.length - 1;
-  document.getElementById('msPi').textContent = `${msPage + 1} / ${msPages.length}`;
+  document.getElementById('msPi').textContent = (msPage + 1) + ' / ' + msPages.length;
 }
 
 // 보장 입력 후 메인 슬라이드 숨기고 결과 표시
